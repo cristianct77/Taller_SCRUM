@@ -1,0 +1,2 @@
+<% if (ok != null) { %><div class="msg ok"><%= Consulta.h(ok) %></div><% } %>
+<% if (error != null) { %><div class="msg error"><%= Consulta.h(error) %></div><% } %>

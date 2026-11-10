@@ -1,0 +1,31 @@
+<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" import="java.util.*, java.math.*, richpos.*" %><%
+    // Encabezado común: verifica la sesión y el rol, y muestra el menú.
+    request.setCharacterEncoding("UTF-8");
+    Map<String, Object> usuario = (Map<String, Object>) session.getAttribute("usuario");
+    if (usuario == null) { response.sendRedirect("index.jsp"); return; }
+    String rol = (String) usuario.get("rol");
+    long idUsuario = ((Number) usuario.get("id_usuario")).longValue();
+    if (!"ADMIN".equals(rol) && !Arrays.asList(permitidos).contains(rol)) { response.sendRedirect("principal.jsp"); return; }
+    String ok = null, error = null;
+    String accion = "POST".equals(request.getMethod()) ? request.getParameter("accion") : null;
+%><!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>RichPOS</title>
+  <link rel="stylesheet" href="css/estilos.css">
+</head>
+<body>
+<header class="barra">
+  <a class="marca" href="principal.jsp">Rich<span>POS</span></a>
+  <nav>
+    <% if ("ADMIN".equals(rol) || "CLIENTE".equals(rol) || "ATENCION_CLIENTE".equals(rol)) { %><a href="pedidos.jsp">Pedidos</a><% } %>
+    <% if ("ADMIN".equals(rol) || "AREA_OPERATIVA".equals(rol)) { %><a href="preparacion.jsp">Preparación</a><% } %>
+    <% if ("ADMIN".equals(rol) || "DOMICILIARIO".equals(rol)) { %><a href="entrega.jsp">Entrega</a><% } %>
+    <% if ("ADMIN".equals(rol) || "AREA_OPERATIVA".equals(rol)) { %><a href="abastecimiento.jsp">Abastecimiento</a><% } %>
+    <% if ("ADMIN".equals(rol) || "CONTABILIDAD".equals(rol)) { %><a href="finanzas.jsp">Inventario y finanzas</a><% } %>
+  </nav>
+  <div class="quien"><%= Consulta.h(usuario.get("nombre_completo")) %> · <%= Consulta.h(usuario.get("rol_nombre")) %> <a href="salir.jsp">Salir</a></div>
+</header>
+<main>

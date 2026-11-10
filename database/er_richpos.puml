@@ -1,0 +1,405 @@
+@startuml er_richpos
+skinparam defaultFontName "DejaVu Sans"
+skinparam shadowing false
+skinparam linetype ortho
+skinparam classBackgroundColor #FFFFFF
+skinparam classBorderColor #C62828
+skinparam ArrowColor #555555
+skinparam packageBorderColor #999999
+hide circle
+hide methods
+left to right direction
+title Modelo entidad-relación – base de datos richpos (MySQL 8)
+package "Seguridad y organización" {
+entity sede {
+  * id_sede : bigint <<PK>>
+  nombre : varchar[80] <<UK>>
+  direccion : varchar[150]
+  ciudad : varchar[60]
+  telefono : varchar[20]
+  activa : tinyint[1]
+  creado_en : datetime
+}
+entity parametro {
+  * clave : varchar[50] <<PK>>
+  valor : varchar[100]
+  descripcion : varchar[200]
+}
+entity rol {
+  * id_rol : smallint <<PK>>
+  codigo : varchar[30] <<UK>>
+  nombre : varchar[60]
+}
+entity usuario {
+  * id_usuario : bigint <<PK>>
+  nombre_usuario : varchar[40] <<UK>>
+  nombre_completo : varchar[100]
+  correo : varchar[120]
+  clave_hash : varchar[200]
+  id_rol : smallint <<FK>>
+  id_sede : bigint <<FK>>
+  autorizado : tinyint[1]
+  intentos_fallidos : tinyint
+  ultimo_acceso : datetime
+  creado_en : datetime
+}
+entity bitacora {
+  * id_bitacora : bigint <<PK>>
+  id_usuario : bigint <<FK>>
+  accion : varchar[40]
+  entidad : varchar[40]
+  id_entidad : bigint
+  detalle : json
+  ip : varchar[45]
+  fecha : datetime
+}
+}
+package "Terceros" {
+entity cliente {
+  * id_cliente : bigint <<PK>>
+  id_usuario : bigint <<FK>> <<UK>>
+  tipo_persona : varchar[10]
+  tipo_documento : varchar[5]
+  num_documento : varchar[20]
+  nombre : varchar[120]
+  telefono : varchar[20]
+  correo : varchar[120]
+  creado_en : datetime
+}
+entity direccion_cliente {
+  * id_direccion : bigint <<PK>>
+  id_cliente : bigint <<FK>>
+  direccion : varchar[150]
+  barrio : varchar[80]
+  referencia : varchar[150]
+  principal : tinyint[1]
+}
+entity domiciliario {
+  * id_domiciliario : bigint <<PK>>
+  id_usuario : bigint <<FK>> <<UK>>
+  id_sede : bigint <<FK>>
+  nombre : varchar[100]
+  telefono : varchar[20]
+  placa_vehiculo : varchar[10]
+  disponible : tinyint[1]
+  activo : tinyint[1]
+}
+entity proveedor {
+  * id_proveedor : bigint <<PK>>
+  id_usuario : bigint <<FK>>
+  nit : varchar[20] <<UK>>
+  razon_social : varchar[120]
+  contacto : varchar[100]
+  telefono : varchar[20]
+  correo : varchar[120]
+  activo : tinyint[1]
+}
+}
+package "Catálogo" {
+entity categoria_producto {
+  * id_categoria : smallint <<PK>>
+  nombre : varchar[60] <<UK>>
+}
+entity producto {
+  * id_producto : bigint <<PK>>
+  codigo : varchar[20] <<UK>>
+  nombre : varchar[80]
+  descripcion : varchar[200]
+  id_categoria : smallint <<FK>>
+  unidad_medida : varchar[5]
+  perecedero : tinyint[1]
+  stock_minimo_kg : decimal[10,3]
+  activo : tinyint[1]
+}
+entity precio_producto {
+  * id_precio : bigint <<PK>>
+  id_producto : bigint <<FK>>
+  id_sede : bigint <<FK>>
+  precio_kg : decimal[14,2]
+  vigente_desde : datetime
+  vigente_hasta : datetime
+  id_usuario : bigint <<FK>>
+}
+entity medio_pago {
+  * id_medio_pago : smallint <<PK>>
+  nombre : varchar[40] <<UK>>
+  activo : tinyint[1]
+}
+}
+package "Ventas y preparación" {
+entity pedido {
+  * id_pedido : bigint <<PK>>
+  codigo : varchar[20] <<UK>>
+  id_sede : bigint <<FK>>
+  id_cliente : bigint <<FK>>
+  id_direccion : bigint <<FK>>
+  canal : varchar[15]
+  metodo_entrega : varchar[15]
+  id_medio_pago : smallint <<FK>>
+  estado : varchar[30] <<FK>>
+  estado_pago : varchar[10]
+  subtotal : decimal[14,2]
+  valor_domicilio : decimal[14,2]
+  total : decimal[14,2]
+  observaciones : varchar[250]
+  fecha_solicitud : datetime
+  fecha_registro : datetime
+  id_usuario_registro : bigint <<FK>>
+  actualizado_en : datetime
+}
+entity detalle_pedido {
+  * id_detalle : bigint <<PK>>
+  id_pedido : bigint <<FK>>
+  id_producto : bigint <<FK>>
+  cantidad_solicitada_kg : decimal[10,3]
+  peso_real_kg : decimal[10,3]
+  precio_kg : decimal[14,2]
+  subtotal : decimal[14,2]
+  estado : varchar[15]
+}
+entity pedido_historial {
+  * id_historial : bigint <<PK>>
+  id_pedido : bigint <<FK>>
+  estado_anterior : varchar[30]
+  estado_nuevo : varchar[30] <<FK>>
+  id_usuario : bigint <<FK>>
+  fecha : datetime
+  observacion : varchar[250]
+}
+entity pago {
+  * id_pago : bigint <<PK>>
+  id_pedido : bigint <<FK>>
+  id_medio_pago : smallint <<FK>>
+  valor : decimal[14,2]
+  referencia : varchar[60]
+  recibido_por : varchar[15]
+  fecha : datetime
+  id_usuario : bigint <<FK>>
+}
+entity comanda {
+  * id_comanda : bigint <<PK>>
+  id_pedido : bigint <<FK>> <<UK>>
+  fecha : datetime
+  id_usuario : bigint <<FK>>
+}
+entity corte {
+  * id_corte : bigint <<PK>>
+  id_detalle : bigint <<FK>>
+  especificacion_tecnica : varchar[120]
+  peso_kg : decimal[10,3]
+  temperatura_c : decimal[4,1]
+  calidad_ok : tinyint[1]
+  conforme : tinyint[1]
+  id_corte_sustituido : bigint <<FK>>
+  id_usuario : bigint <<FK>>
+  fecha_verificacion : datetime
+}
+entity paquete {
+  * id_paquete : bigint <<PK>>
+  id_pedido : bigint <<FK>>
+  tipo_empaque : varchar[10]
+  peso_total_kg : decimal[10,3]
+  sellado : tinyint[1]
+  rotulo : varchar[200]
+  estado : varchar[30] <<FK>>
+  id_usuario : bigint <<FK>>
+  fecha_empaque : datetime
+}
+entity paquete_corte {
+  * id_paquete : bigint <<PK>> <<FK>>
+  * id_corte : bigint <<PK>> <<FK>>
+}
+entity entrega {
+  * id_entrega : bigint <<PK>>
+  id_pedido : bigint <<FK>>
+  id_domiciliario : bigint <<FK>>
+  fecha_asignacion : datetime
+  fecha_entrega : datetime
+  exitosa : tinyint[1]
+  recibido_por : varchar[100]
+  motivo_fallo : varchar[200]
+}
+}
+package "Abastecimiento" {
+entity orden_compra {
+  * id_orden_compra : bigint <<PK>>
+  codigo : varchar[20] <<UK>>
+  id_sede : bigint <<FK>>
+  id_proveedor : bigint <<FK>>
+  estado : varchar[30] <<FK>>
+  valor_total : decimal[14,2]
+  observacion : varchar[250]
+  fecha_generacion : datetime
+  fecha_aprobacion : datetime
+  fecha_recepcion : datetime
+  id_usuario_genera : bigint <<FK>>
+  id_usuario_aprueba : bigint <<FK>>
+}
+entity detalle_orden_compra {
+  * id_detalle_oc : bigint <<PK>>
+  id_orden_compra : bigint <<FK>>
+  id_producto : bigint <<FK>>
+  cantidad_kg : decimal[10,3]
+  precio_kg : decimal[14,2]
+  subtotal : decimal[14,2]
+  cantidad_recibida_kg : decimal[10,3]
+}
+entity financiamiento_orden {
+  * id_financiamiento : bigint <<PK>>
+  id_orden_compra : bigint <<FK>>
+  entidad : varchar[100]
+  monto : decimal[14,2]
+  viable : tinyint[1]
+  fecha : datetime
+  id_usuario : bigint <<FK>>
+}
+entity orden_compra_historial {
+  * id_historial : bigint <<PK>>
+  id_orden_compra : bigint <<FK>>
+  estado_anterior : varchar[30]
+  estado_nuevo : varchar[30] <<FK>>
+  id_usuario : bigint <<FK>>
+  fecha : datetime
+  observacion : varchar[250]
+}
+entity factura_proveedor {
+  * id_factura : bigint <<PK>>
+  id_orden_compra : bigint <<FK>>
+  numero_factura : varchar[30]
+  fecha_factura : date
+  valor_total : decimal[14,2]
+  peso_total_kg : decimal[10,3]
+  archivada : tinyint[1]
+  ruta_archivo : varchar[250]
+}
+}
+package "Inventario y caja" {
+entity almacen {
+  * id_almacen : bigint <<PK>>
+  id_sede : bigint <<FK>>
+  nombre : varchar[60]
+  refrigerado : tinyint[1]
+  temperatura_objetivo_c : decimal[4,1]
+}
+entity lote {
+  * id_lote : bigint <<PK>>
+  codigo_lote : varchar[30] <<UK>>
+  id_producto : bigint <<FK>>
+  id_almacen : bigint <<FK>>
+  id_orden_compra : bigint <<FK>>
+  id_factura : bigint <<FK>>
+  fecha_recepcion : datetime
+  fecha_vencimiento : date
+  peso_recibido_kg : decimal[10,3]
+  peso_disponible_kg : decimal[10,3]
+  frescura_ok : tinyint[1]
+  estado : varchar[30] <<FK>>
+  id_usuario_recibe : bigint <<FK>>
+}
+entity movimiento_inventario {
+  * id_movimiento : bigint <<PK>>
+  id_lote : bigint <<FK>>
+  tipo : varchar[10]
+  cantidad_kg : decimal[10,3]
+  referencia_tipo : varchar[20]
+  referencia_id : bigint
+  id_usuario : bigint <<FK>>
+  fecha : datetime
+}
+entity movimiento_caja {
+  * id_movimiento_caja : bigint <<PK>>
+  id_sede : bigint <<FK>>
+  tipo : varchar[8]
+  concepto : varchar[120]
+  valor : decimal[14,2]
+  referencia_tipo : varchar[20]
+  referencia_id : bigint
+  id_usuario : bigint <<FK>>
+  fecha : datetime
+}
+}
+package "Estados" {
+entity estado_pedido {
+  * codigo : varchar[30] <<PK>>
+  nombre : varchar[40]
+  orden : tinyint
+}
+entity estado_orden_compra {
+  * codigo : varchar[30] <<PK>>
+  nombre : varchar[40]
+  orden : tinyint
+}
+entity estado_lote {
+  * codigo : varchar[30] <<PK>>
+  nombre : varchar[40]
+  orden : tinyint
+}
+entity estado_paquete {
+  * codigo : varchar[30] <<PK>>
+  nombre : varchar[40]
+  orden : tinyint
+}
+}
+sede ||--o{ almacen
+usuario ||--o{ bitacora
+usuario ||--o{ cliente
+pedido ||--o{ comanda
+usuario ||--o{ comanda
+detalle_pedido ||--o{ corte
+corte ||..o{ corte
+usuario ||--o{ corte
+orden_compra ||--o{ detalle_orden_compra
+producto ||--o{ detalle_orden_compra
+pedido ||--o{ detalle_pedido
+producto ||--o{ detalle_pedido
+cliente ||--o{ direccion_cliente
+sede ||--o{ domiciliario
+usuario ||--o{ domiciliario
+domiciliario ||--o{ entrega
+pedido ||--o{ entrega
+orden_compra ||--o{ factura_proveedor
+orden_compra ||--o{ financiamiento_orden
+usuario ||--o{ financiamiento_orden
+almacen ||--o{ lote
+estado_lote ||--o{ lote
+factura_proveedor ||--o{ lote
+orden_compra ||--o{ lote
+producto ||--o{ lote
+usuario ||--o{ lote
+sede ||--o{ movimiento_caja
+usuario ||--o{ movimiento_caja
+lote ||--o{ movimiento_inventario
+usuario ||--o{ movimiento_inventario
+usuario ||--o{ orden_compra
+estado_orden_compra ||--o{ orden_compra
+usuario ||--o{ orden_compra
+proveedor ||--o{ orden_compra
+sede ||--o{ orden_compra
+estado_orden_compra ||--o{ orden_compra_historial
+orden_compra ||--o{ orden_compra_historial
+usuario ||--o{ orden_compra_historial
+medio_pago ||--o{ pago
+pedido ||--o{ pago
+usuario ||--o{ pago
+estado_paquete ||--o{ paquete
+pedido ||--o{ paquete
+usuario ||--o{ paquete
+corte ||--o{ paquete_corte
+paquete ||--o{ paquete_corte
+cliente ||--o{ pedido
+direccion_cliente ||--o{ pedido
+estado_pedido ||--o{ pedido
+medio_pago ||--o{ pedido
+sede ||--o{ pedido
+usuario ||--o{ pedido
+estado_pedido ||--o{ pedido_historial
+pedido ||--o{ pedido_historial
+usuario ||--o{ pedido_historial
+producto ||--o{ precio_producto
+sede ||--o{ precio_producto
+usuario ||--o{ precio_producto
+categoria_producto ||--o{ producto
+usuario ||--o{ proveedor
+rol ||--o{ usuario
+sede ||--o{ usuario
+@enduml
